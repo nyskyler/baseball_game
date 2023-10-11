@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>숫자야구</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+        #form {
+            margin-top: 20px;
+        }
+        #input {
+            padding: 10px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #logs {
+            font-size: 18px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        #results {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .strike-icon::before {
+            content: '\2713';
+            /* 체크마크 아이콘 (유니코드) */
+            color: green;
+            /* 스트라이크 아이콘 색상 */
+        }
+        .ball-icon::before {
+            content: '\26BE';
+            /* 야구 공 아이콘을 사용 (유니코드) */
+            color: #ff5733;
+            /* 볼 아이콘 색상 */
+        }
+        .out-icon::before {
+            content: '\274C';
+            /* X 마크 아이콘을 사용 (유니코드) */
+            color: red;
+            /* 아웃 아이콘 색상 */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <form id="form">
+            <input type="text" id="input" placeholder="소수점을 포함한 4자리 숫자 입력">
+            <button>확인</button>
+        </form>
+        <div id="logs"></div>
+        <div id="results"></div>
+    </div>
+    <script>
+        const $input = document.querySelector('#input');
+        const $form = document.querySelector('#form');
+        const $results = document.querySelector('#results');
+        let out = 0;
+        const numbers = [];
+        for (let n = 0; n < 10; n++) { // 0~9까지의 숫자를 넣어 numbers 배열 만들기
+            numbers.push(n);
+        }
+        const answer = [];
+        let n = 0;
+        while (n < 4) {
+            const index = Math.floor(Math.random() * numbers.length);
+            if (answer.length === 3 && numbers[index] === 0) {
+                continue;
+            }
+            answer.push(numbers[index]);
+            numbers.splice(index, 1);
+            n += 1;
+        }
+        const idx = Math.floor(Math.random() * (answer.length - 1)) + 1;
+        if (answer[0] === 0) { // 정답의 첫 번째 숫자가 0이라면 .을 0 다음에 위치시키기
+            answer.splice(1, 0, '.');
+        } else {
+            answer.splice(idx, 0, '.');
+        }
+        answerNum = parseFloat(answer.join(''));
+        const tries = [];
+        function checkInput(input) {
+            if (!input.includes('.')) {
+                return alert('.을 포함한 소수를 입력해 주세요.')
+            }
+            if (input.length !== 5) {
+                return alert('소수점을 포함한 4자리 숫자를 입력해 주세요.');
+            }
+            if (new Set(input).size !== 5) {
+                return alert('중복되지 않게 입력해 주세요.');
+            }
+            if (tries.includes(input)) {
+                return alert('이미 시도한 값입니다.');
+            }
+            return true;
+        }
+        $form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const value = $input.value;
+            const inputNum = parseFloat(value)
+            console.log(inputNum);
+            console.log(typeof inputNum)
+            $input.value = '';
+            let strike = 0;
+            let ball = 0;
+            if (out >= 3) {
+                return;
+            }
+            if (!checkInput(value)) { // 형식이 올바른지 확인
+                return;
+            }
+            if (answer.join('') === value) {
+                $results.append(document.createTextNode(`<${tries.length + 1}회> ${value} 홈런입니다!`));
+                return;
+            }
+            if (tries.length >= 9) {
+                $results.append(document.createTextNode(`패배! 정답은 ${answer.join('')}`));
+                return;
+            }
+            tries.push(value);
+            answerDuplicated = answer.slice() // 정답 배열 복사하기
+            dotIdxOfAnswer = answer.slice().indexOf('.');
+            answerDuplicated.splice(dotIdxOfAnswer, 1); // 복사한 정답 배열에서 '.' 제거하기
+            inputDuplicated = value.split('').map((el, idx) => parseInt(el)); // 문자열 입력값을 숫자 요소로 변환해 배열로 만들기
+            doxIdxOfInput = value.slice().indexOf('.');
+            inputDuplicated.splice(doxIdxOfInput, 1); // 복사한 입력 배열에서 '.' 제거하기
+            const dotPositionMsg = dotIdxOfAnswer === doxIdxOfInput ? '(소수점 일치)' : '(소수점 다름)';
+            console.log("answerD", answerDuplicated);
+            console.log("inputD", inputDuplicated);
+            for (let i = 0; i < answerDuplicated.length; i++) {
+                const index = inputDuplicated.indexOf((answerDuplicated[i]));
+                if (index > -1) {
+                    if (index == i) {
+                        strike += 1;
+                    } else {
+                        ball += 1;
+                    }
+                }
+            }
+            let compareNum = '';
+            if (answerNum > inputNum) {
+                compareNum = '보다 큽니다.';
+            } else if (answerNum < inputNum) {
+                compareNum = '보다 작습니다.';
+            }
+            if (strike === 0 && ball == 0) { // 스트라이크, 볼이 하나도 없는 경우
+                out += 1;
+                gameover = '';
+                if (out >= 3) gameover = '게임오버';
+                message = `<${tries.length}회>  ${value}${compareNum} ${dotPositionMsg} <span class="out-icon"></span>  ${out} ${gameover}`;
+            } else { // 적어도 한 개 이상의 스트라이크 또는 볼이 있는 경우
+                message = `<${tries.length}회>  ${value}${compareNum} ${dotPositionMsg}: <span class="strike-icon"></span>  ${strike}    <span class="ball-icon"></span>  ${ball}`;
+            }
+            $results.innerHTML += message + '<br/>';
+            console.log(answer);
+        });
+    </script>
+</body>
+</html>
